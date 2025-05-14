@@ -25,6 +25,7 @@ class ToolbarWindow {
     });
 
     this.window.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+    this.window.setAlwaysOnTop(true, "screen-saver", 2);
     this.window?.setVisibleOnAllWorkspaces(true, {
       visibleOnFullScreen: true,
     });

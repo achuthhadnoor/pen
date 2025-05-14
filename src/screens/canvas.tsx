@@ -130,7 +130,9 @@ export default function Canvas() {
     const drawCursorHighlight = (context: CanvasRenderingContext2D, position: { x: number, y: number }) => {
         context.beginPath();
         context.arc(position.x, position.y, 10, 0, 2 * Math.PI); // Adjust size as needed
-        context.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Semi-transparent black
+        context.fillStyle = 'rgba(153, 44, 161, 0.683)'; // Semi-transparent black
+        context.strokeStyle = 'rgba(153, 44, 161,1)';  // Color of the stroke
+        context.stroke();  // Draw the stroke around the arc
         context.fill();
     };
 

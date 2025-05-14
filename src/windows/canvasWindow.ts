@@ -1,32 +1,64 @@
-import { BrowserWindow } from "electron";
+import { BrowserWindow, screen } from "electron";
 import windowManager from "./windowManager";
 
+declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
+declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
+
 class SettingsWindow {
-  private window: BrowserWindow | null = null;
+  private windows: BrowserWindow[] = [];
 
-  private createWindow() {
-    this.window = new BrowserWindow({
-      width: 800,
-      height: 600,
-      webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false,
-      },
-    });
+  private createWindows() {
+    // Get all displays
+    const displays = screen.getAllDisplays();
 
-    this.window.loadURL("path/to/license.html");
+    // Create a window for each display
+    displays.forEach((display) => {
+      const window = new BrowserWindow({
+        x: display.bounds.x,
+        y: display.bounds.y,
+        width: display.bounds.width,
+        height: display.bounds.height,
+        transparent: true,
+        frame: false,
+        hiddenInMissionControl: true,
+        enableLargerThanScreen: true,
+        alwaysOnTop: true,
+        focusable: false,
+        webPreferences: {
+          preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+        },
+      });
 
-    this.window.on("closed", () => {
-      this.window = null;
+      window.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}/#/canvas`);
+      window.setAlwaysOnTop(true, "screen-saver", 1);
+      window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+      window.setIgnoreMouseEvents(true);
+      window.on("closed", () => {
+        const index = this.windows.indexOf(window);
+        if (index > -1) {
+          this.windows.splice(index, 1);
+        }
+      });
+
+      this.windows.push(window);
     });
   }
+
   open() {
-    if (!this.window) this.createWindow();
-    else this.window.show();
+    if (this.windows.length === 0) {
+      this.createWindows();
+    } else {
+      this.windows.forEach((window) => window.show());
+    }
   }
 
   close() {
-    if (this.window) this.window.close();
+    this.windows.forEach((window) => {
+      if (!window.isDestroyed()) {
+        window.close();
+      }
+    });
+    this.windows = [];
   }
 }
 
