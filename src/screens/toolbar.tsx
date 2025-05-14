@@ -222,30 +222,30 @@ function Toolbar() {
                     </button>
                 ))}
                 <button
-                    className={`p-2 rounded-lg no-drag hover:bg-black/5 hover:text-neutral-800 dark:hover:text-neutral-200 dark:hover:bg-white/5 ${fadeLines ? "bg-black/10 dark:bg-white/10 text-neutral-800 dark:text-neutral-200" : ""
+                    className={`p-2 rounded-lg no-drag hover:bg-black/5 hover:text-neutral-800 dark:hover:text-neutral-200 dark:hover:bg-white/5 ${options.fadeLines ? "bg-black/10 dark:bg-white/10 text-neutral-800 dark:text-neutral-200" : ""
                         }`}
-                    onClick={() => setFadeLines(!fadeLines)}
+                    onClick={() => updateOption("fadeLines", !options.fadeLines)}
                 >
                     <BackIcon />
                 </button>
                 <button
                     className={`p-2 rounded-lg no-drag hover:bg-black/5 hover:text-neutral-800 dark:hover:text-neutral-200 dark:hover:bg-white/5 ${options.highlightCursor ? "bg-black/10 dark:bg-white/10 text-neutral-800 dark:text-neutral-200" : ""
                         }`}
-                    onClick={() => setHighlightCursor(!options.highlightCursor)}
+                    onClick={() => updateOption("highlightCursor", !options.highlightCursor)}
                 >
                     <SearchIcon />
                 </button>
                 <button
                     className={`p-2 rounded-lg no-drag hover:bg-black/5 hover:text-neutral-800 dark:hover:text-neutral-200 dark:hover:bg-white/5 ${options.moveShapes ? "bg-black/10 dark:bg-white/10 text-neutral-800 dark:text-neutral-200" : ""
                         }`}
-                    onClick={() => setMoveShapes(!options.moveShapes)}
+                    onClick={() => updateOption("moveShapes", !options.moveShapes)}
                 >
                     <MoveIcon />
                 </button>
                 <button
                     className={`p-2 rounded-lg no-drag hover:bg-black/5 hover:text-neutral-800 dark:hover:text-neutral-200 dark:hover:bg-white/5 ${options.fillShape ? "bg-black/10 dark:bg-white/10 text-neutral-800 dark:text-neutral-200" : ""
                         }`}
-                    onClick={() => setFillShape(!options.fillShape)}
+                    onClick={() => updateOption("fillShape", !options.fillShape)}
                 >
                     <PinIcon />
                 </button>
@@ -262,7 +262,7 @@ function Toolbar() {
                     max={10}
                     className="no-drag accent-lime-400"
                     value={options.strokeThickness}
-                    onChange={(e) => setStrokeThickness(Number(e.target.value))}
+                    onChange={(e) => updateOption("strokeThickness", Number(e.target.value))}
                 />
             </div>
 
