@@ -13,6 +13,7 @@ import {
     DeleteIcon,
     RandomColorIcon,
 } from "../components/Icons";
+import useSyncStorage from "../hooks/useLocalStorage";
 
 
 const colors = [
@@ -29,33 +30,8 @@ const tools = [
     { name: "arrow", icon: ArrowIcon },
 ];
 
-const defaultOptions = {
-    transparentMode: false,
-    shapeType: "pen",
-    highlightCursor: false,
-    strokeThickness: 2,
-    fadeLines: false,
-    fillShape: false,
-    randomColorMode: false,
-    moveShapes: false,
-    fadeSpeed: 1,
-    color: "pink",
-};
-
 function Toolbar() {
-    const [options, setOptions] = useState(() => {
-        const stored = localStorage.getItem("toolbarOptions");
-        return stored ? JSON.parse(stored) : defaultOptions;
-    });
-
-    const updateOption = (key: keyof typeof defaultOptions, value: any) => {
-        setOptions((prev: any) => ({ ...prev, [key]: value }));
-    };
-
-    // Save to localStorage when options change
-    useEffect(() => {
-        localStorage.setItem("toolbarOptions", JSON.stringify(options));
-    }, [options]);
+    const { appState: options, updateState } = useSyncStorage()
     const clearCanvas = () => {
         console.log("Canvas cleared"); // Replace with real logic
     };
@@ -72,7 +48,7 @@ function Toolbar() {
                     type="checkbox"
                     className="sr-only peer"
                     checked={options.transparentMode}
-                    onChange={() => updateOption("transparentMode", !options.transparentMode)}
+                    onChange={() => updateState("transparentMode", !options.transparentMode)}
                 />
                 <div className="relative w-11 h-6 bg-black/10 dark:bg-white/10 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-neutral-600 peer-checked:bg-lime-600 dark:peer-checked:bg-lime-600" />
             </label>
@@ -98,7 +74,7 @@ function Toolbar() {
             <div className="flex gap-1 px-2 items-center">
                 <button
                     className={cl("p-2 rounded-lg no-drag hover:bg-black/5 hover:text-neutral-800 dark:hover:text-neutral-200 dark:hover:bg-white/5", options.randomColorMode ? "bg-black/10 dark:bg-white/10 text-neutral-800 dark:text-neutral-200" : "")}
-                    onClick={() => updateOption("randomColorMode", !options.randomColorMode)}
+                    onClick={() => updateState("randomColorMode", !options.randomColorMode)}
                 >
                     <RandomColorIcon />
                 </button>
@@ -107,7 +83,7 @@ function Toolbar() {
                         key={name}
                         className={`p-2 rounded-lg no-drag hover:bg-black/5 hover:text-neutral-800 dark:hover:text-neutral-200 dark:hover:bg-white/5 ${options.shapeType === name ? "bg-black/10 dark:bg-white/10 text-neutral-800 dark:text-neutral-200" : ""
                             }`}
-                        onClick={() => updateOption("shapeType", name)}
+                        onClick={() => updateState("shapeType", name)}
                     >
                         <Icon />
                     </button>
@@ -115,28 +91,28 @@ function Toolbar() {
                 <button
                     className={`p-2 rounded-lg no-drag hover:bg-black/5 hover:text-neutral-800 dark:hover:text-neutral-200 dark:hover:bg-white/5 ${options.fadeLines ? "bg-black/10 dark:bg-white/10 text-neutral-800 dark:text-neutral-200" : ""
                         }`}
-                    onClick={() => updateOption("fadeLines", !options.fadeLines)}
+                    onClick={() => updateState("fadeLines", !options.fadeLines)}
                 >
                     <BackIcon />
                 </button>
                 <button
                     className={`p-2 rounded-lg no-drag hover:bg-black/5 hover:text-neutral-800 dark:hover:text-neutral-200 dark:hover:bg-white/5 ${options.highlightCursor ? "bg-black/10 dark:bg-white/10 text-neutral-800 dark:text-neutral-200" : ""
                         }`}
-                    onClick={() => updateOption("highlightCursor", !options.highlightCursor)}
+                    onClick={() => updateState("highlightCursor", !options.highlightCursor)}
                 >
                     <SearchIcon />
                 </button>
                 <button
                     className={`p-2 rounded-lg no-drag hover:bg-black/5 hover:text-neutral-800 dark:hover:text-neutral-200 dark:hover:bg-white/5 ${options.moveShapes ? "bg-black/10 dark:bg-white/10 text-neutral-800 dark:text-neutral-200" : ""
                         }`}
-                    onClick={() => updateOption("moveShapes", !options.moveShapes)}
+                    onClick={() => updateState("moveShapes", !options.moveShapes)}
                 >
                     <MoveIcon />
                 </button>
                 <button
                     className={`p-2 rounded-lg no-drag hover:bg-black/5 hover:text-neutral-800 dark:hover:text-neutral-200 dark:hover:bg-white/5 ${options.fillShape ? "bg-black/10 dark:bg-white/10 text-neutral-800 dark:text-neutral-200" : ""
                         }`}
-                    onClick={() => updateOption("fillShape", !options.fillShape)}
+                    onClick={() => updateState("fillShape", !options.fillShape)}
                 >
                     <PinIcon />
                 </button>
@@ -153,7 +129,7 @@ function Toolbar() {
                     max={10}
                     className="no-drag accent-lime-400"
                     value={options.strokeThickness}
-                    onChange={(e) => updateOption("strokeThickness", Number(e.target.value))}
+                    onChange={(e) => updateState("strokeThickness", Number(e.target.value))}
                 />
             </div>
 

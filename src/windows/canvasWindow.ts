@@ -33,6 +33,7 @@ class SettingsWindow {
       window.setAlwaysOnTop(true, "screen-saver", 1);
       window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       window.setIgnoreMouseEvents(true);
+      window.webContents.openDevTools({ mode: "detach" });
       window.on("closed", () => {
         const index = this.windows.indexOf(window);
         if (index > -1) {

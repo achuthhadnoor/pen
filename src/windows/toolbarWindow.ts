@@ -29,6 +29,7 @@ class ToolbarWindow {
     this.window?.setVisibleOnAllWorkspaces(true, {
       visibleOnFullScreen: true,
     });
+    this.window.webContents.openDevTools({ mode: "detach" });
     // this.window.on("closed", () => {
     //   this.window = null;
     // });

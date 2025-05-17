@@ -144,7 +144,7 @@ export const MoveIcon = () => (
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
     >
-        <g clip-path="url(#clip0_4576_118)">
+        <g clipPath="url(#clip0_4576_118)">
             <path
                 d="M13.5 8.25V4.5C13.5 4.10218 13.342 3.72064 13.0607 3.43934C12.7794 3.15804 12.3978 3 12 3C11.6022 3 11.2206 3.15804 10.9393 3.43934C10.658 3.72064 10.5 4.10218 10.5 4.5"
                 stroke="currentColor"
