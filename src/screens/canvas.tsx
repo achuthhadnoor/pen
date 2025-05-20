@@ -1,4 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
+import useLocalStorage from '../hooks/useLocalStorage';
+import { defaultOptions, colors, ToolbarOptions } from './toolbar'; // Import shared options and types
 
 interface Point {
     x: number;
@@ -33,16 +35,19 @@ export default function Canvas() {
     const [pencilPoints, setPencilPoints] = useState<Point[]>([]);
     const [offset, setOffset] = useState<Point | null>(null); // Offset of the cursor from the shape's origin
 
+    const [options, setOptions] = useLocalStorage<ToolbarOptions>("toolbarOptions", defaultOptions);
+
     const [drawing, setDrawing] = useState(false);
-    const [shapeType, setShapeType] = useState<'line' | 'rectangle' | 'circle' | 'pencil' | 'arrow' | 'move'>('line');
-    const [highlightCursor, setHighlightCursor] = useState(true);
-    const [strokeThickness, setStrokeThickness] = useState<number>(2);
-    const [fadeLines, setFadeLines] = useState(false);
-    const [fadeSpeed, setFadeSpeed] = useState<number>(0.01);
-    const [fillShape, setFillShape] = useState(false);
+    // const [shapeType, setShapeType] = useState<'line' | 'rectangle' | 'circle' | 'pencil' | 'arrow' | 'move'>('line'); // Replaced by options.shapeType
+    const [highlightCursor, setHighlightCursor] = useState(true); // Retained as local state, not in defaultOptions
+    // const [strokeThickness, setStrokeThickness] = useState<number>(2); // Replaced by options.strokeThickness
+    // const [fadeLines, setFadeLines] = useState(false); // Replaced by options.fadeLines
+    const [fadeSpeed, setFadeSpeed] = useState<number>(0.01); // Retained local, or could be added to options if needed
+    // const [fillShape, setFillShape] = useState(false); // Replaced by options.fillShape
     const [movingShape, setMovingShape] = useState<string | null>(null); // ID of the shape being moved
-    const [strokeColor, setStrokeColor] = useState<string>('rgb(100 255 127)');
-    const [currentFillColor, setCurrentFillColor] = useState<string>('rgba(100, 255, 127, 0.1)');
+    // const [strokeColor, setStrokeColor] = useState<string>('rgb(100 255 127)'); // Replaced by options.color
+    const [currentFillColor, setCurrentFillColor] = useState<string>(`rgba(${colors.find(c => c.name === options.color)?.base || '100, 255, 127'}, 0.2)`);
+
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -56,7 +61,7 @@ export default function Canvas() {
 
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.lineCap = 'round';
-        context.lineWidth = strokeThickness;
+        context.lineWidth = options.strokeThickness;
 
         // Redraw existing shapes
         shapes.forEach(shape => {
@@ -68,20 +73,20 @@ export default function Canvas() {
             drawShape(context, tempShape);
         }
 
-        if (highlightCursor) {
+        if (highlightCursor) { // highlightCursor is still local state
             drawCursorHighlight(context, cursorPosition);
         }
 
-
-    }, [shapes, tempShape, cursorPosition, highlightCursor, strokeThickness, strokeColor]);
+    }, [shapes, tempShape, cursorPosition, highlightCursor, options.strokeThickness, options.color, options.transparentMode]); // Added options.transparentMode
 
     useEffect(() => {
-        if (fadeLines) {
+        if (options.fadeLines) {
             const fadeInterval = setInterval(() => {
                 setShapes(prevShapes => {
                     return prevShapes.map(shape => {
                         if (shape.fade && shape.opacity && shape.opacity > 0) {
-                            return { ...shape, opacity: shape.opacity - fadeSpeed };
+                            // Use options.fadeSpeed if it's added to ToolbarOptions
+                            return { ...shape, opacity: shape.opacity - (options.fadeSpeed || fadeSpeed) };
                         }
                         return shape;
                     }).filter(shape => !(shape.fade && shape.opacity !== undefined && shape.opacity <= 0)); // Remove completely faded shapes
@@ -89,7 +94,7 @@ export default function Canvas() {
             }, 20); // Adjust interval for fade speed
             return () => clearInterval(fadeInterval);
         }
-    }, [fadeLines, fadeSpeed]);
+    }, [options.fadeLines, options.fadeSpeed, fadeSpeed]); // Added options.fadeSpeed if it becomes part of options
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -100,23 +105,23 @@ export default function Canvas() {
                 event.preventDefault();
                 redo();
             } else if (event.key === 'l') {
-                setShapeType('line');
+                setOptions(prev => ({ ...prev, shapeType: 'line' }));
             } else if (event.key === 'a') {
-                setShapeType('arrow');
+                setOptions(prev => ({ ...prev, shapeType: 'arrow' }));
             } else if (event.key === 'r') {
-                setShapeType('rectangle');
+                setOptions(prev => ({ ...prev, shapeType: 'rectangle' }));
             } else if (event.key === 'c' || event.key === 'o') {
-                setShapeType('circle');
+                setOptions(prev => ({ ...prev, shapeType: 'circle' }));
             } else if (event.key === '1') {
-                handleColorClick('100, 255, 127');
+                handleColorClick(colors[0]?.name || "pink"); // Use color name
             } else if (event.key === '2') {
-                handleColorClick('255, 252, 100');
+                handleColorClick(colors[1]?.name || "yellow"); // Use color name
             } else if (event.key === '3') {
-                handleColorClick('255, 100, 164');
+                handleColorClick(colors[2]?.name || "green"); // Use color name
             } else if (event.key === 'f') {
-                setFillShape(!fillShape);
+                setOptions(prev => ({ ...prev, fillShape: !prev.fillShape }));
             } else if (event.key === 'p') {
-                setShapeType("pencil");
+                setOptions(prev => ({ ...prev, shapeType: "pencil" }));
             }
         };
 
@@ -125,27 +130,62 @@ export default function Canvas() {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [historyIndex, shapes, history, shapeType, strokeColor]);
+    }, [historyIndex, shapes, history, options.shapeType, options.color, setOptions]); // Updated dependencies
+
+    // Update currentFillColor when options.color changes
+    useEffect(() => {
+        const selectedColorPalette = colors.find(c => c.name === options.color);
+        // Assuming color.base is like "bg-pink-500", we need to extract the RGB.
+        // This is a placeholder. A robust way to get RGB from Tailwind class or store RGB directly is needed.
+        // For now, let's use a simplified mapping based on known color names for fill.
+        let rgbValue = '128, 128, 128'; // Default grey
+        if (options.color === "pink") rgbValue = '236, 72, 153'; // approx from bg-pink-500
+        else if (options.color === "yellow") rgbValue = '234, 179, 8'; // approx from bg-yellow-500
+        else if (options.color === "green") rgbValue = '34, 197, 94'; // approx from bg-green-500
+        // Add more colors if they exist in `colors` array
+
+        setCurrentFillColor(`rgba(${rgbValue}, 0.2)`);
+    }, [options.color]);
+
 
     const drawCursorHighlight = (context: CanvasRenderingContext2D, position: { x: number, y: number }) => {
         context.beginPath();
         context.arc(position.x, position.y, 10, 0, 2 * Math.PI); // Adjust size as needed
-        context.fillStyle = 'rgba(153, 44, 161, 0.683)'; // Semi-transparent black
-        context.strokeStyle = 'rgba(153, 44, 161,1)';  // Color of the stroke
-        context.stroke();  // Draw the stroke around the arc
+        // Use a color from the options or a default if not available
+        const highlightBaseColor = colors.find(c => c.name === options.color)?.base || 'rgba(153, 44, 161, 0.683)';
+        // This is a placeholder to extract RGB from tailwind class, ideally store RGB directly
+        let fillStyle = 'rgba(153, 44, 161, 0.683)';
+        let strokeStyle = 'rgba(153, 44, 161, 1)';
+        if (options.color === "pink") { fillStyle = 'rgba(236, 72, 153, 0.5)'; strokeStyle = 'rgb(236, 72, 153)';}
+        else if (options.color === "yellow") { fillStyle = 'rgba(234, 179, 8, 0.5)'; strokeStyle = 'rgb(234, 179, 8)';}
+        else if (options.color === "green") { fillStyle = 'rgba(34, 197, 94, 0.5)'; strokeStyle = 'rgb(34, 197, 94)';}
+
+        context.fillStyle = fillStyle;
+        context.strokeStyle = strokeStyle;
+        context.stroke();
         context.fill();
     };
 
     const drawShape = (context: CanvasRenderingContext2D, shape: Shape) => {
-        context.strokeStyle = shape.strokeColor || 'rgba(0, 0, 0)'; // Semi-transparent black
-        context.lineWidth = shape.strokeThickness || 2;
+        // Use options.color for stroke by default, can be overridden by shape.strokeColor for specific shapes if needed
+        const selectedColorPalette = colors.find(c => c.name === (shape.strokeColor || options.color));
+        // Placeholder for RGB conversion from Tailwind class
+        let rgbColor = "0,0,0"; // default black
+        if (selectedColorPalette?.name === "pink") rgbColor = '236, 72, 153';
+        else if (selectedColorPalette?.name === "yellow") rgbColor = '234, 179, 8';
+        else if (selectedColorPalette?.name === "green") rgbColor = '34, 197, 94';
+
+
+        context.strokeStyle = `rgb(${rgbColor})`;
+        context.lineWidth = shape.strokeThickness || options.strokeThickness;
         if (shape.opacity !== undefined) {
             context.globalAlpha = shape.opacity;
         } else {
             context.globalAlpha = 1; // Default opacity
         }
         if (shape.fill) {
-            context.fillStyle = shape.fillColor || 'rgba(0, 0, 0, 0.1)'; // Semi-transparent black
+            // Use currentFillColor which is derived from options.color with alpha
+            context.fillStyle = shape.fillColor || currentFillColor;
         }
         switch (shape.type) {
             case 'line': {
@@ -224,7 +264,7 @@ export default function Canvas() {
     const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
         const { clientX, clientY } = 'touches' in event ? event.touches[0] : event;
 
-        if (shapeType === 'move') {
+        if (options.shapeType === 'move') {
             // Check if the click is inside any shape
             for (const shape of shapes) {
                 const context = canvasRef.current!.getContext('2d')!;
@@ -284,7 +324,7 @@ export default function Canvas() {
             setDrawing(true);
             setStartPoint({ x: clientX, y: clientY });
             setCurrentPoint({ x: clientX, y: clientY });
-            if (shapeType === 'pencil') {
+            if (options.shapeType === 'pencil') {
                 setPencilPoints([{ x: clientX, y: clientY }]);
             }
         }
@@ -299,15 +339,15 @@ export default function Canvas() {
 
         if (!startPoint || !currentPoint) return;
 
-        if (shapeType === 'pencil') {
-            const newShape = {
-                type: shapeType,
+        if (options.shapeType === 'pencil') {
+            const newShape: Shape = {
+                type: options.shapeType,
                 x1: startPoint.x,
                 y1: startPoint.y,
                 points: pencilPoints,
-                strokeColor: strokeColor,
-                strokeThickness: strokeThickness,
-                fade: fadeLines,
+                strokeColor: options.color, // Use options.color
+                strokeThickness: options.strokeThickness,
+                fade: options.fadeLines,
                 opacity: 1,
                 fill: false, // Pencil doesn't support fill
                 id: Math.random().toString(),
@@ -324,20 +364,18 @@ export default function Canvas() {
             setStartPoint(null);
             setCurrentPoint(null);
         } else {
-
-
-            const newShape = {
-                type: shapeType,
+            const newShape: Shape = {
+                type: options.shapeType as Shape['type'], // Ensure type compatibility
                 x1: startPoint.x,
                 y1: startPoint.y,
                 x2: currentPoint.x,
                 y2: currentPoint.y,
-                strokeColor: strokeColor,
-                strokeThickness: strokeThickness,
-                fade: fadeLines,
+                strokeColor: options.color, // Use options.color
+                strokeThickness: options.strokeThickness,
+                fade: options.fadeLines,
                 opacity: 1,
-                fill: fillShape,
-                fillColor: fillShape ? currentFillColor : undefined,
+                fill: options.fillShape,
+                fillColor: options.fillShape ? currentFillColor : undefined,
                 id: Math.random().toString(),
             };
 
@@ -381,30 +419,29 @@ export default function Canvas() {
         const { clientX: moveClientX, clientY: moveClientY } = 'touches' in event ? event.touches[0] : event;
         setCurrentPoint({ x: moveClientX, y: moveClientY });
 
-        if (shapeType === 'pencil') {
+        if (options.shapeType === 'pencil') {
             setPencilPoints(prevPoints => [...prevPoints, { x: moveClientX, y: moveClientY }]);
             setTempShape({
-                type: shapeType,
+                type: options.shapeType,
                 x1: startPoint.x,
                 y1: startPoint.y,
                 points: [...pencilPoints, { x: moveClientX, y: moveClientY }],
-                strokeColor: strokeColor,
-                strokeThickness: strokeThickness,
+                strokeColor: options.color,
+                strokeThickness: options.strokeThickness,
                 fill: false, // Pencil doesn't support fill
                 id: Math.random().toString(),
             });
         } else {
-
-            const newShape = {
-                type: shapeType,
+            const newShape: Shape = {
+                type: options.shapeType as Shape['type'],
                 x1: startPoint.x,
                 y1: startPoint.y,
                 x2: moveClientX,
                 y2: moveClientY,
-                strokeColor: strokeColor,
-                strokeThickness: strokeThickness,
-                fill: fillShape,
-                fillColor: fillShape ? currentFillColor : undefined,
+                strokeColor: options.color,
+                strokeThickness: options.strokeThickness,
+                fill: options.fillShape,
+                fillColor: options.fillShape ? currentFillColor : undefined,
                 id: Math.random().toString(),
             };
             setTempShape(newShape);
@@ -438,11 +475,35 @@ export default function Canvas() {
         setHistoryIndex(newHistory.length - 1);
     };
 
-    const handleColorClick = (color: string) => {
-        console.log(`rgba(${color})`);
-        setStrokeColor(`rgba(${color})`);
-        setCurrentFillColor(`rgba(${color},0.2)`);
+    const handleColorClick = (colorName: string) => {
+        // Update options.color which will then trigger useEffect to update currentFillColor
+        setOptions(prev => ({ ...prev, color: colorName }));
     };
+
+
+    // Listen for window resize to adjust canvas dimensions
+    useEffect(() => {
+        const handleResize = () => {
+            const canvas = canvasRef.current;
+            if (canvas) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                // Redraw everything after resize
+                const context = canvas.getContext('2d');
+                if (context) {
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    context.lineCap = 'round';
+                    context.lineWidth = options.strokeThickness;
+                    shapes.forEach(shape => drawShape(context, shape));
+                    if (tempShape) drawShape(context, tempShape);
+                    if (highlightCursor) drawCursorHighlight(context, cursorPosition);
+                }
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [shapes, tempShape, highlightCursor, cursorPosition, options.strokeThickness, drawShape]);
+
 
     return (
         <div className="relative h-screen w-screen"

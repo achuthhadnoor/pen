@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import cl from 'classnames';
 import {
     PenIcon,
@@ -13,15 +12,15 @@ import {
     DeleteIcon,
     RandomColorIcon,
 } from "../components/Icons";
+import useLocalStorage from "../hooks/useLocalStorage";
 
-
-const colors = [
+export const colors = [
     { name: "pink", base: "bg-pink-500", ring: "ring-pink-800", darkRing: "dark:peer-checked:ring-pink-200" },
     { name: "yellow", base: "bg-yellow-500", ring: "ring-yellow-800", darkRing: "dark:peer-checked:ring-yellow-200" },
     { name: "green", base: "bg-green-500", ring: "ring-green-800", darkRing: "dark:peer-checked:ring-green-200" },
 ];
 
-const tools = [
+export const tools = [
     { name: "pen", icon: PenIcon },
     { name: "line", icon: LineIcon },
     { name: "square", icon: SquareIcon },
@@ -42,20 +41,15 @@ const defaultOptions = {
     color: "pink",
 };
 
-function Toolbar() {
-    const [options, setOptions] = useState(() => {
-        const stored = localStorage.getItem("toolbarOptions");
-        return stored ? JSON.parse(stored) : defaultOptions;
-    });
+export type ToolbarOptions = typeof defaultOptions;
 
-    const updateOption = (key: keyof typeof defaultOptions, value: any) => {
-        setOptions((prev: any) => ({ ...prev, [key]: value }));
+function Toolbar() {
+    const [options, setOptions] = useLocalStorage<ToolbarOptions>("toolbarOptions", defaultOptions);
+
+    const updateOption = (key: keyof ToolbarOptions, value: any) => {
+        setOptions((prev) => ({ ...prev, [key]: value }));
     };
 
-    // Save to localStorage when options change
-    useEffect(() => {
-        localStorage.setItem("toolbarOptions", JSON.stringify(options));
-    }, [options]);
     const clearCanvas = () => {
         console.log("Canvas cleared"); // Replace with real logic
     };
